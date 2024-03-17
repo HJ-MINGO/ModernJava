@@ -1,5 +1,7 @@
 package com.modern.exec;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.function.Consumer;
 
 public class DesignPatternReFactory {
@@ -130,4 +132,111 @@ public class DesignPatternReFactory {
         // 그럼 이제 은행들은 OnlineBanking클래스를 상속받지 않고도 직접 람다표현식을 전달해서 다양한 동작을 추가할수잇다.
         new lamdaOnlineBanking().processCustomer(1337,(Customer c)-> System.out.println("Hello "));
     }
+
+    /**
+     * ===================================================
+     *  3. 옵저버
+     * ===================================================
+     * */
+
+
+    /**
+     * 옵저버 패턴
+     * 어떤 이벤트가 발생했을때ㅣ 한 객체(주제)가 다른 객체 리스트(옵저버)에 자동으로 알림을 보내야하는 상황에 사용
+     * 일반적으로 GUI 애플리케이션에서 옵저버 패턴이 자주등장한다.
+     * 버튼 같은 GUI 컴포넌트에 옵저버를 설정할 수 있다. 그리고 사용자가 버튼을 클릭하면 옵저버에 알림이 전달되고
+     * 정해진 동작이 수행된다. 꼭 GUI에서만 옵저버를 사용하는것은 아니다. 예를들어 주식의 가격(주제) 변동에 반응하는
+     * 다수의 거래자(옵저버) 예제에세도 옵저버 패턴이 사용된다.
+     *
+     * 예를 들어 트위터 같은 커스텀마이즈된 알림시스템을 설계하고 구현할수 있다.
+     * 다양한 신문매체에서 내가 구독한 뉴스트위,또는 특정키워드가 포함된 트윗이 등록되면 알림을 받는 형식
+     *
+     * */
+
+    interface Observer{
+        // 다양한 옵저버를 그룹화할 인터페이스
+        // 해당 인터페이스는 새로운 트윗이 있을때 주제가 호출될수 있도록 하나의 메서드를 제공
+        void notify(String tweet);
+    }
+    
+    // 내가 설정한 키워드들마다 동작할수있는 옵저버를 정의
+    class NYTimes implements Observer {
+        public void notify(String tweet){
+            if (tweet != null && tweet.contains("money")) {
+                System.out.println("Breaking news in Ny" +  tweet);
+            }
+        }
+    }
+
+    class Guardian implements Observer {
+        public void notify(String tweet){
+            if (tweet != null && tweet.contains("queen")) {
+                System.out.println("Breaking news in Guardian" +  tweet);
+            }
+        }
+    }
+
+    class LeMond implements Observer {
+        public void notify(String tweet){
+            if (tweet != null && tweet.contains("wine")) {
+                System.out.println("Breaking news in LeMond" +  tweet);
+            }
+        }
+    }
+
+    interface Subject {
+        void registerObserver(Observer o);
+        void notifyObserver(String tweet);
+    }
+
+    // 주제는 registerObserver 메서드로 새로운 옵저를 등록하고 notifyObserver메서드로 트윗의 옵저버에 이를 알린다.
+    class Feed implements Subject {
+        // 이제 Feed는 트윗을 받았을때 알림을 보낼 옵저버 리스트를 유지한다.
+        // 이제 이렇게 구성함으로서 주제와 옵저버를 연결하는 데모 애플리케이션을 만들수있다.
+        private final List<Observer> observerList = new ArrayList<>();
+
+        public void registerObserver(Observer o) {
+            this.observerList.add(o);
+        }
+
+        public void notifyObserver(String tweet) {
+            observerList.forEach(o->o.notify(tweet));
+        }
+    }
+
+    public void ObserverUseMethod(){
+        Feed feed = new Feed();
+        feed.registerObserver(new NYTimes());
+        feed.registerObserver(new Guardian());
+        feed.registerObserver(new LeMond());
+        // 이럼으로 이제 가디언도 우리의 트윗을 받아볼수있다.
+        feed.notifyObserver("The queen said her Favourite book is Modern Java In Action");
+
+    }
+
+    public void RamdaObserverUseMethod() {
+        // 3개의 NYTimes,Guardian,LeMond 명시적으로 인스턴스화 하지 않고
+        // 람다표현식으로 직접 전달해서 사용한다.
+        Feed feed = new Feed();
+        feed.registerObserver((String tweet)->{
+            if (tweet != null && tweet.contains("money")) {
+                System.out.println("Breaking news in Ny" +  tweet);
+            }
+        });
+
+        feed.registerObserver((String tweet)->{
+            if (tweet != null && tweet.contains("queen")) {
+                System.out.println("Breaking news in Guardian" +  tweet);
+            }
+        });
+
+        feed.registerObserver((String tweet)->{
+            if (tweet != null && tweet.contains("wine")) {
+                System.out.println("Breaking news in LeMond" +  tweet);
+            }
+        });
+        // 물론 비교적 동작이 쉬울경우는 이렇게 사용할수 있다지만 , 옵저버가 상태를 가지고
+        // 여러 메서드를 정의하는 복잡한 구조가된다고하면 이러한 람다표현식 보다 클래스 구현방식이 더 현명하다.
+    }
+
 }
