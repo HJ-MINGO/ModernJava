@@ -3,6 +3,8 @@ package com.modern.exec;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
+import java.util.function.Function;
+import java.util.function.UnaryOperator;
 
 public class DesignPatternReFactory {
 
@@ -239,4 +241,86 @@ public class DesignPatternReFactory {
         // 여러 메서드를 정의하는 복잡한 구조가된다고하면 이러한 람다표현식 보다 클래스 구현방식이 더 현명하다.
     }
 
+
+    /**
+     * ===================================================
+     *  4. 의무체인
+     * ===================================================
+     * */
+
+
+    /**
+     * 의무체인 패턴
+     *  작업 처리 객체의 체인(동작 체인 등)을 만들 때는 의무체인 패턴을 사용한다.
+     *  한 객체가 어떤 작업을 처리한 다음에 다른 객체로 결과를 전달하고, 다른객체도 해야 할 작업을 처리한
+     *  다음에 또 다른 객체로 전달하는 방식이다.
+     *  일반 적으로 다음으로 처리할 객체 정보를 유지하는 필드를 포함하는 작업처리 추상 클래스로 의무체인을 구성한다.
+     *  작업 처리 객체가 자신의 작업을 끝냈으면 다음 작업 처리 객체로 결과를 전달한다.
+     *
+     * */
+    /**         의무체인 패턴 UML
+     * 
+     *              ConcreteProcessingObject
+     *                      ◇       │   
+     *                      │       │
+     *                      │       │
+     *                      │       │
+     *                      ▼       ▼   
+     *                  ProcessingObject  ◀────── 클라이언트
+     *                     + handle()
+     * 템플릿 메서드 디자인 패턴이 사용된걸 확인 가능하다.
+     *
+     * */
+    public abstract class ProcessingObject<T> {
+        protected ProcessingObject<T> successor;
+        public void setSuccessor(ProcessingObject<T> successor) {
+            this.successor = successor;
+        }
+        public T handle(T input) { // 일부 작업을 어떻게 처리해야할지 전체적으로 기술
+            T r =handleWork(input);
+            if (successor != null) {
+                return successor.handle(r);
+            }
+            return r;
+        }
+        // 이제 ProcessingObject클래스를 상속받아 handleWork메서드를 구현하연 다양한 종류의
+        // 작업처리 객체를 만들 수잇따.
+        abstract protected T handleWork(T input);
+    }
+
+    //텍스트를 처리하는 2개의 클래스
+    class HeaderTextProcessing extends ProcessingObject<String> {
+        public String handleWork(String text) {
+            return "From Raoul , Mario and Alan: " + text;
+        }
+    }
+    class SpellCheckerProcessing extends ProcessingObject<String> {
+        public String handleWork(String text) {
+            return text.replaceAll("labda","lambda");
+        }
+    }
+    public void jobChain(){
+        ProcessingObject<String> p1 = new HeaderTextProcessing();
+        ProcessingObject<String> p2 = new SpellCheckerProcessing();
+        p1.setSuccessor(p2); // HeaderTextProcessing 와 SpellCheckerProcessing 두작업처리를 연결
+        String result = p1.handle("Aren't labdas really sexy?!!");
+        System.out.println(result);
+    }
+
+    /**
+     * 위에 jobChain메서드를 람다표현식으로 리팩터링
+     * 해당 패턴은 함수체인(함수조합)과 비슷하다.
+     * 작업 처리 객체를 Function<String,String>, 더 정확하게 표현하자면 UnaryOperator<String> 형식의 인스턴스로
+     * 표현 할 수 있다. andThen 메서드로 이들 함수를 조합해 체인을 만들 수있다.
+     *
+     * */
+    public void jobChainLamda(){
+        UnaryOperator<String> headerProcessing =
+                (String text)-> "From Raoul , Mario and Alan: " + text; // 첫번째 작업 처리 객체
+        UnaryOperator<String> SpellCheckerProcessing =
+                (String text)-> text.replaceAll("labda","lambda");// 두번째 작업 처리 객체
+        Function<String , String> pipeline =
+                headerProcessing.andThen(SpellCheckerProcessing); // 동작체인으로 두작업(함수)를 조합
+        String result = pipeline.apply("Aren't labdas really sexy?!!");
+    }
 }
