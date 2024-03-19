@@ -1,9 +1,12 @@
 package com.modern.exec;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.function.Supplier;
 import java.util.function.UnaryOperator;
 
 public class DesignPatternReFactory {
@@ -323,4 +326,83 @@ public class DesignPatternReFactory {
                 headerProcessing.andThen(SpellCheckerProcessing); // 동작체인으로 두작업(함수)를 조합
         String result = pipeline.apply("Aren't labdas really sexy?!!");
     }
+
+    /**
+     * ===================================================
+     *  5. 팩토리
+     * ===================================================
+     * */
+
+
+    /**
+     * 팩토리 패턴
+     *  인스턴스화 로직을 클라이언트에 노출하지 않고 객체를 만들 때 팩토리 디자인 패턴을 사용한다.
+     * */
+
+    //예를 들어 우리가 은행에서 일하고 있는 은행에서 취급하는 대출, 채권, 주식 등 다양한 상품을 만들어야 한다고 가장하자
+
+
+    // dumy클래스이긴 하지만 이들은 다양한 상품을 의미하는 클래스이다.
+    static private interface Product {}
+    static private class Loan implements Product {}
+    static private class Stock implements Product {}
+    static private class Bond implements Product {}
+
+
+    class ProductFactory{
+        // 다양한 상품을 만드는 Factory클래스
+        
+        // 1. 일반적인 방식을 위한 createProduct메서드
+        public static Product createProduct(String name) {
+            //여기서 Loan,Stock,bond는 모두 Product의 서브형식이다.
+            // createProduct메서드는 생산된 상품을 설정하는 로직을 포함 할 수 있다.
+            // 이는 부가적인 기능일 뿐 아래 코드의 진짜 장점은 생성자와 설정을 외부로 노출하지 않음으로
+            // 클라이언트가 단순하게 상품을 생산할 수 있다는 점이다.
+            switch (name) {
+                case "loan" :
+                    return new Loan();
+                case "Stock" :
+                    return new Stock();
+                case "bond" :
+                    return new Bond();
+                default: throw new RuntimeException("No such Product " + name);
+            }
+        }
+
+        // 3. 람다를 적용시키기 위해 p3map을 이용한 createProductRamda메서드
+        public static Product createProductRamda(String name) {
+            // Map을 이용해 팩토리 디자인 패턴에서 했던 것처럼 다양한 상품을 인스턴스화 가능하다.
+            Supplier<Product> p = p3map.get(name);
+            if (p != null) {
+                return p.get();
+            }
+            throw new RuntimeException("No such product " + name);
+        }
+    }
+
+    // 3. LamDa를 이용한 방식
+    // 다음과 같이 상품명을 생성자로 연결하는 Map을 만들어서 코드를 재구현할수 있다.
+    final static Map<String,Supplier<Product>> p3map = new HashMap<>();
+    static { // Map을 이용한 팩토리 디자인 패턴
+        // 생성자 메서드 참조로 접근방식을 이제 Map에 적용한 방식
+        p3map.put("loan" ,Loan::new);
+        p3map.put("Stock",Stock::new);
+        p3map.put("bond",Bond::new);
+    }
+
+    public void FactoryMainMethod(){
+        // ProductFactory 클래스를 통해 생성자와 설정을 외부로 노출하지 않음으로
+        // 클라이언트가 단순하게 원하는 상품만 명시해주면 return으로 해당상품을 생산가능하다.
+        // 1. 일반적인 방식
+        Product p1 = ProductFactory.createProduct("loan");
+
+        // 생성자도 메서드 참조로 접근이 가능하다.
+        // 2. 생성자 메서드 참조로 접근방식
+        Supplier<Product> loanSupplier = Loan::new;
+        Product p2 = loanSupplier.get();
+        
+        // 3. LamDa를 이용한 방식
+        Product p3 = ProductFactory.createProductRamda("loan");
+    }
+
 }
