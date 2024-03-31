@@ -1,6 +1,9 @@
 package com.modern.optional;
 
+import java.util.List;
 import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 public class OptionalChap2 {
     /**
@@ -81,6 +84,7 @@ public class OptionalChap2 {
     // main2()의 과정을 flatMap으로 정의
     public void main3(){
         Person person = new Person();
+        // person 을 Optional 로 생성
         Optional<Person> optPerson = Optional.of(person);
 //        Optional<String> name = optPerson.map(Person::getCar)
 //                .map(Car::getInsurance)
@@ -107,6 +111,19 @@ public class OptionalChap2 {
                 .flatMap(Car::getInsurance)
                 .map(Insurance::getName)
                 .orElse("NoName"); //Optional 이 비어있으면 기본값 "NoName" 리턴
+    }
+
+    public Set<String> getCarInsuranceNames(List<Person> persons) {
+        return persons.stream()
+                .map(Person::getCar) // getCar()메서드는 Optional<Car> 를 반환 (사람이 차를 가지지 않을수도 있는 상황을 반환)
+                //그래서 여기선 1번째 연산이 끝나고 Stream<Optional<Car>> 값이 2번째 map 으로 전달
+                .map(optCar-> optCar.flatMap(Car::getInsurance))
+                //2번째 map에서는 Optional<Car>를 Optional<Insurance>로 변환한다.
+                .map(optInsurance-> optInsurance.map(Insurance::getName))
+                //3번째 map에서는 각각을 Optional<String> 으로 변환 시킨다.
+                .flatMap(Optional::stream)
+                //그결과 flatMap 에는 3번째 map()으로 받은 Stream<Optional<String>>를 얻게되기 때문에 flatMap 을 사용하는것이다.
+                .collect(Collectors.toSet());
     }
 
 }
