@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class OptionalChap2 {
     /**
@@ -115,15 +116,28 @@ public class OptionalChap2 {
 
     public Set<String> getCarInsuranceNames(List<Person> persons) {
         return persons.stream()
-                .map(Person::getCar) // getCar()메서드는 Optional<Car> 를 반환 (사람이 차를 가지지 않을수도 있는 상황을 반환)
+                .map(Person::getCar) // 1번째 map()메서드에서는 getCar()메서드는 Optional<Car> 를 반환 (사람이 차를 가지지 않을수도 있는 상황을 반환)
                 //그래서 여기선 1번째 연산이 끝나고 Stream<Optional<Car>> 값이 2번째 map 으로 전달
                 .map(optCar-> optCar.flatMap(Car::getInsurance))
                 //2번째 map에서는 Optional<Car>를 Optional<Insurance>로 변환한다.
                 .map(optInsurance-> optInsurance.map(Insurance::getName))
                 //3번째 map에서는 각각을 Optional<String> 으로 변환 시킨다.
                 .flatMap(Optional::stream)
-                //그결과 flatMap 에는 3번째 map()으로 받은 Stream<Optional<String>>를 얻게되기 때문에 flatMap 을 사용하는것이다.
+                // 그결과 flatMap 에는 3번째 map()으로 받은 Stream<Optional<String>>를 얻게되기 때문에 flatMap 을 사용하는것이다.
+                // 이결과 NULL 걱정없이 안전하게 값을 처리할순 있지만 마지막결과를 얻으려면 빈 Optional 을 제거하고 값을
+                // 언랩해야(감싸고있는 Optional 을 제거) 사용가능하기때문에 기회비용이 많이 든다.
                 .collect(Collectors.toSet());
     }
 
+    /**
+     * Optional 클래스의 stream() 메서드를 이용하면 한번의 연산으로 같은결과를 얻을수 있다.
+     * 해당 메서드는 각 Optional 이 비어있는지 아닌지에 따라 Optional 을 0개이상의 항목을 포함하는 스트림으로 변환한다.
+     * 해당메서드는 참조를 스트림의 한 요소에서 다른 스트림으로 적용하는 함수로 볼 수 있으며 이를 원래 스트림에 호출하는
+     * flatMap 메서드로 전달 할 수 있다.
+     * */
+    public Set<String> getCarInsuranceNames2(Stream<Optional<String>> stream) {
+        return stream.filter(Optional::isPresent)
+                .map(Optional::get)
+                .collect(Collectors.toSet());
+    }
 }
