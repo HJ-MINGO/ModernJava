@@ -1,6 +1,8 @@
 package com.modern.optional;
 
 import javax.print.DocFlavor;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Optional;
 import java.util.function.Consumer;
 
@@ -64,5 +66,18 @@ public class OptionalChap3 {
          * 실행할 수 있는 Runnable 을 인수로 받는다는 점만 ifPresent와 다르다. 
          *
          * */
+    }
+
+    public void getOptionalValue(){
+        /**
+         * 예를들어  Map의 get 메서드는 요청한 키에 대응하는 값을 찾지 못했을 때 null 을 반환한다.
+         * 지금까지 살펴본걸로 치면 그냥 null을 반환하는것보다 Optional로 감싸서 반환하는게 더 바람직하다.
+         * Map의 get()메서드의 시그니처는 우리가 고칠수없지만 get()메서드의 반환값을 Optional 로 감쌀수 있다.
+         * */
+        Map<String,Object> map = new HashMap<>();
+        Object value = map.get("key"); //여기서 "key"라는 key값의 해당하는 값이 없을경우 null을 반환한다.\
+
+        //Optional 을 이용한 안전한 방법
+        Optional<Object> value2 = Optional.ofNullable(map.get("key"));
     }
 }
